@@ -1,0 +1,173 @@
+%YAML 1.2
+---
+name: FASTBuild
+file_extensions: [bff]
+scope: source.bff
+
+variables:
+  identifier: '\b[A-Za-z_][A-Za-z_0-9]+\b'
+  separator: '(,|;)'
+
+contexts:
+  symbols-builtin:
+    - match: (Function|Alias|Compiler|Copy|CopyDir|CSAssembly|DLL|Exec|Executable|ForEach|Library|ObjectList|Print|RemoveDir|Settings|Test|Unity|Using|VCXProject|VSSolution|XCodeProject)
+      scope: support.function.builtin
+  
+  symbols-builtin-prepocessor:
+    - match: (__LINUX__|__OSX__|__WINDOWS__)
+      scope: entity.name.constant.preprocessor constant.language
+
+  main:
+    - include: statements-preprocessor
+    - include: statements
+
+  statements-preprocessor:
+    - match: ^\s*(#)
+      captures:
+        1: keyword.control punctuation.definition.preprocessor meta.preprocessor
+      push:
+        - meta_content_scope: meta.preprocessor
+        - include: comments
+        - match: \bif\b
+          scope: keyword.control.conditional
+        - match: \bendif\b
+          scope: keyword.control.conditional
+        - match: \bdefine\b
+          scope: keyword.control.macro meta.preprocessor
+          set:
+            - meta_scope: meta.preprocessor.macro
+            - match: '{{identifier}}'
+              scope: entity.name.constant.preprocessor
+            - match: $\n
+              pop: true
+        - match: \bimport\b
+          scope: keyword.control.import meta.preprocessor
+          set:
+            - meta_scope: meta.preprocessor.import
+            - match: '{{identifier}}'
+              scope: entity.name.constant.preprocessor
+            - match: $\n
+              pop: true
+        - match: \binclude\b
+          scope: keyword.control.conditional
+          push:
+            - include: string
+            - match: $\n
+              pop: true
+        - match: \bonce\b
+          pop: true
+        - include: symbols-builtin-prepocessor
+        - match: '(?={{identifier}})'
+          scope: entity.name.constant.preprocessor
+        - include: numbers
+        - match: $\n
+          pop: true
+
+  comments:
+    - match: (//).*$
+      scope: comment.line.double-slash
+      captures:
+        1: punctuation.definition.comment
+    - match: (;).*$
+      scope: comment.line.semi-colon
+      captures:
+        1: punctuation.definition.comment
+
+  statements:
+    - include: expressions
+    - include: block
+
+  expressions:
+    - include: comments
+    - include: strings
+    - include: numbers
+    - include: operators
+    - include: function-calls
+    - include: variables
+
+  block:
+    - match: '\{'
+      scope: punctuation.definition.block.begin.bff
+      push:
+        - meta_scope: meta.block.bff
+        - match: '\}'
+          scope: punctuation.definition.block.end.bff
+          pop: true
+        - include: statements
+
+  strings:
+    - include: strings-single
+    - include: strings-double
+
+  strings-single:
+    - match: "'"
+      scope: punctuation.definition.string.begin
+      push:
+        - meta_scope: string.quoted.single
+        - match: "'"
+          scope: punctuation.definition.string.end
+          pop: true
+        - include: string-escape
+        - include: string-placeholder
+        - include: string-variable
+
+  strings-double:
+    - match: '"'
+      scope: punctuation.definition.string.begin
+      push:
+        - meta_scope: string.quoted.double
+        - match: '"'
+          scope: punctuation.definition.string.end
+          pop: true
+        - include: string-escape
+        - include: string-placeholder
+        - include: string-variable
+
+  string-escape:
+    - match: \^.
+      scope: constant.character.escape
+
+  string-placeholder:
+    - match: '%.' # TODO(Manuzor): Remove this? It does not apply to _every_ string.
+      scope: constant.other.placeholder
+
+  string-variable:
+    - match: (\$){{identifier}}(\$)
+      scope:  variable.other.readwrite
+      captures:
+        1: punctuation.definition.variable
+        2: punctuation.definition.variable
+
+  numbers:
+    - include: scope:source.c++#numbers
+
+  operators:
+    - match: '='
+      scope: keyword.operator.assignment
+    - match: \+
+      scope: keyword.operator
+    - match: '-'
+      scope: keyword.operator
+    - match: \*
+      scope: keyword.operator
+    - match: /
+      scope: keyword.operator
+
+  variables:
+    - match: (\.){{identifier}}
+      scope: meta.variable variable.name
+      captures:
+        1: punctuation.definition.variable
+
+  function-calls:
+    - match: ({{identifier}})\s*(\()
+      captures:
+        1: variable.function.bff
+        2: meta.group.bff punctuation.definition.group.begin.bff
+      push:
+        - meta_scope: meta.function-call.bff
+        - meta_content_scope: meta.group.bff
+        - match: \)
+          scope: meta.group.bff punctuation.definition.group.end.bff
+          pop: true
+        - include: expressions

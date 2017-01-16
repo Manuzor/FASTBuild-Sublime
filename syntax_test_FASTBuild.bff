@@ -1,0 +1,97 @@
+; SYNTAX TEST "Packages/FASTBuild/FASTBuild.sublime-syntax"
+
+// A comment "hello"
+; <- comment.line.double-slash
+
+; A comment
+; <- comment.line.semi-colon
+
+"This contains ' inside the string"
+; <- string.quoted.double
+
+'This contains " inside the string'
+; <- string.quoted.single
+
+"Escape the ^$ and ^" symbols, or escape the ^^ itself."
+;                                            ^^ constant.character.escape
+;                  ^^ constant.character.escape
+;           ^^ constant.character.escape
+;                                              ^^^^^^^^^ string.quoted.double
+;                    ^^^^^^^^^^^^^^^^^^^^^^^^ string.quoted.double
+;             ^^^^ string.quoted.double
+;^^^^^^^^^^^^  string.quoted.double
+;<- string.quoted.double
+
+#if __WINDOWS__ ; Foo
+;   ^^^^^^^^^^^ meta.preprocessor
+; <- meta.preprocessor
+  #define ENABLE_PDB_STORING
+;         ^^^^^^^^^^^^^^^^^^ entity.name.constant.preprocessor
+;  ^ meta.preprocessor.macro
+; ^ meta.preprocessor
+; <- -meta.preprocessor
+#endif
+; <- meta.preprocessor
+
+#import VS120COMNTOOLS
+;       ^^^^^^^^^^^^^^ entity.name.constant.preprocessor
+;^^^^^^ meta.preprocessor.import
+.VisualStudio2012Compiler = '$VS120COMNTOOLS$\..\..\VC\bin\cl.exe'
+;                         ^ keyword.operator
+;^^^^^^^^^^^^^^^^^^^^^^^^ meta.variable, variable
+; <- meta.variable, variable
+; <- punctuation.definition.variable
+
+Function( arg0, arg1 )
+{
+; <- punctuation.section.block.begin, meta.block
+  .Property1 = "value1"
+; ^^^^^^^^^^ meta.variable, variable
+; <-  meta.block
+  .Property2 = "value2"
+  ; etc...
+}
+; <- punctuation.section.block.end, meta.block
+
+// 
+// Purely visual tests
+// 
+
+; Example A
+Library( "mylib" )
+{
+  .Compiler = "cl.exe"
+}
+
+; Example B
+.Compiler + "cl.exe"
+Library( "mylib" )
+{ // Inline comment
+Some random text
+  'A string' ; With trailing comment
+  CustomFunction( 'with', some, .args, 42 )
+  {
+    .Foo = .Bar
+    .Baz = 'String with $Qux$'
+  }
+
+  CustomFunction( 'with',
+                   some,
+                   .args,
+                   42 )
+  {
+  }
+}
+
+  {{{ .foo }}}
+;            ^ meta.block.bff punctuation.definition.block.end.bff
+;           ^ meta.block.bff meta.block.bff punctuation.definition.block.end.bff
+;          ^ meta.block.bff meta.block.bff meta.block.bff punctuation.definition.block.end.bff
+;     ^^^^ meta.block.bff meta.block.bff meta.block.bff variable
+;    ^^^^^^ meta.block.bff meta.block.bff meta.block.bff
+;   ^ meta.block.bff meta.block.bff meta.block.bff punctuation.definition.block.begin.bff
+;  ^ meta.block.bff meta.block.bff punctuation.definition.block.begin.bff
+; ^ meta.block.bff punctuation.definition.block.begin.bff
+
+'// Can^'t start a comment inside a string'
+'Invalid %abc placeholder and a %% valid one'
