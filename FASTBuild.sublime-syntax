@@ -18,7 +18,6 @@ contexts:
       scope: entity.name.constant.preprocessor constant.language
 
   main:
-    - include: statements-preprocessor
     - include: statements
 
   statements-preprocessor:
@@ -38,7 +37,7 @@ contexts:
             - meta_scope: meta.preprocessor.macro
             - match: '{{identifier}}'
               scope: entity.name.constant.preprocessor
-            - match: $\n
+            - match: (?=$\n)
               pop: true
         - match: \bimport\b
           scope: keyword.control.import meta.preprocessor
@@ -51,8 +50,8 @@ contexts:
         - match: \binclude\b
           scope: keyword.control.conditional
           push:
-            - include: string
-            - match: $\n
+            - include: strings
+            - match: (?=$\n)
               pop: true
         - match: \bonce\b
           pop: true
@@ -74,6 +73,7 @@ contexts:
         1: punctuation.definition.comment
 
   statements:
+    - include: statements-preprocessor
     - include: expressions
     - include: block
 
@@ -154,7 +154,7 @@ contexts:
       scope: keyword.operator
 
   variables:
-    - match: (\.){{identifier}}
+    - match: (\.|\^){{identifier}}
       scope: meta.variable variable.name
       captures:
         1: punctuation.definition.variable
